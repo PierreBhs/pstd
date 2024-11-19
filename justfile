@@ -1,10 +1,19 @@
 project_dir := justfile_directory()
 build_dir := project_dir + "/build"
 
+conan-setup:
+    conan install . -u -b missing
+    source build/Release/generators/conanbuild.sh
+
+
+# Check how to change name later
 build:
-    cmake -S . -B build
-    cmake --build {{build_dir}}
+    cmake --preset conan-release
+    cmake --build --preset conan-release
+
+test:
+    ctest --preset conan-release
 
 run:
-    {{build_dir}}/pstd
+    {{build_dir}}/Release/pstd
     

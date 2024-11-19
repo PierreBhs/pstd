@@ -10,12 +10,16 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror -Wno-missing-field-initiali
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-
 add_executable(${PROJECT_NAME}
                 ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
 # target_link_libraries(${PROJECT_NAME} PRIVATE raylib raygui)
+
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 
 execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
