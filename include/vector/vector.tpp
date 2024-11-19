@@ -2,6 +2,7 @@
 #include "vector/vector.hpp"
 
 #include <cstring>
+#include <memory>
 
 #include <print>
 
@@ -10,6 +11,10 @@ namespace pstd {
 /* Find next power of two for growing capacity */
 uint64_t next_pow2(uint64_t x)
 {
+    if (x <= 1) [[unlikely]] {
+        return 2;
+    }
+
     for (int i = 0; i < 63; i++)
         x |= x >> 1;
     return ++x;
@@ -94,23 +99,42 @@ constexpr const T& vector<T>::back() const
 
 template <typename T>
 constexpr void vector<T>::push_back(const_reference value)
+    requires std::copy_constructible<T>
 {
+    std::print("push_back(const T&): {0} {1}\n", m_size, m_capacity);
     if (m_size == m_capacity) {
-        std::println("{0} {1}", m_capacity, next_pow2(m_capacity));
         m_capacity = next_pow2(m_capacity);
-
-        auto new_data = grow(m_capacity, true);
-
-        // Deallocate old data
-        for (size_type i{0ul}; i < m_size; ++i) {
-            m_data[i].~T();
-        }
-        ::operator delete(m_data);
-
-        m_data = new_data;
+        m_data = grow(m_capacity, true);
     }
 
-    m_data[m_size++] = value;
+    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(value);
+    m_size++;
+}
+
+template <typename T>
+constexpr void vector<T>::push_back(T&& value)
+    requires std::move_constructible<T>
+{
+    std::print("push_back(T&&): {0} {1}\n", m_size, m_capacity);
+    if (m_size == m_capacity) {
+        m_capacity = next_pow2(m_capacity);
+        m_data = grow(m_capacity, false);
+    }
+
+    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::move(value));
+    m_size++;
+}
+
+/*
+** Capacity
+*/
+
+template <typename T>
+constexpr void vector<T>::reserve(size_type new_cap)
+{
+    if (new_cap > m_capacity) {
+        m_data = grow(new_cap, false);
+    }
 }
 
 /*
@@ -122,11 +146,35 @@ T* vector<T>::grow(size_type new_capacity, bool copy)
     T* new_data = static_cast<T*>(::operator new(new_capacity * sizeof(T)));
 
     if (copy) {
-        for (size_type copied{0ul}; copied < m_size; ++copied) {
-            ::new (static_cast<T*>(new_data + copied)) T(*(m_data + copied));
-        }
+        std::uninitialized_copy_n(begin(), size(), new_data);
+    } else {
+        std::uninitialized_move_n(begin(), size(), new_data);
     }
+
+    // Iterator invalidation
+    static_cast<void>(std::destroy_n(begin(), size()));
+    operator delete(m_data);
 
     return new_data;
 }
 }  // namespace pstd
+
+// if (copy) {
+//     std::uninitialized_copy_n(begin(), size(), new_data);
+//     // Equivalent to:
+//     // for (size_type copied{0ul}; copied < m_size; ++copied) {
+//     //     ::new (static_cast<T*>(new_data + copied)) T(*(m_data + copied));
+//     // }
+// } else {
+//     std::uninitialized_move_n(begin(), size(), new_data);
+// }
+
+// // Iterator invalidation
+// static_cast<void>(std::destroy_n(begin(), size()));
+// operator delete(m_data);
+
+// // equiv to:
+// // for (size_type i{0ul}; i < m_size; ++i) {
+// //     m_data[i].~T();
+// // }
+// // ::operator delete(m_data);
