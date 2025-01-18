@@ -1,4 +1,3 @@
-// Uncomment when building
 #include "vector/vector.hpp"
 
 #include <cstring>
@@ -43,8 +42,8 @@ constexpr vector<T>::~vector()
         return;
     }
 
-    for (size_type i = 0; i < m_size; ++i) {
-        (m_data + i)->~T();
+    for (auto& val : *this) {
+        val.~T();
     }
     operator delete(m_data);
 
@@ -68,17 +67,16 @@ constexpr const T& vector<T>::operator[](size_type pos) const
     return m_data[pos];
 }
 
-// Calling front on an empty container causes undefined behavior
 template <typename T>
 constexpr T& vector<T>::front()
 {
-    return m_data[0];
+    return *begin();
 }
 
 template <typename T>
 constexpr const T& vector<T>::front() const
 {
-    return m_data[0];
+    return *begin();
 }
 
 template <typename T>
@@ -98,13 +96,76 @@ constexpr const T& vector<T>::back() const
 */
 
 template <typename T>
+constexpr void vector<T>::clear() noexcept
+{
+    static_cast<void>(std::destroy_n(begin(), size()));
+    m_size = 0;
+}
+
+template <typename T>
+constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val)
+{
+    // Need to return an iterator from the const_iterator input
+    size_type offset{static_cast<size_type>(pos - cbegin())};
+
+    if (size() == capacity()) {
+        m_capacity = next_pow2(capacity());
+        m_data = grow(capacity(), false);
+    }
+
+    for (size_type i{size()}; i > offset; --i) {
+        m_data[i] = m_data[i - 1];  // std::move ? Or done automatically on movable objects ?
+    }
+
+    m_data[offset] = std::move(val);
+    m_size++;
+
+    return begin() + offset;
+}
+
+template <typename T>
+constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& value)
+{
+    size_type offset{static_cast<size_type>(pos - cbegin())};
+
+    if (size() == capacity()) {
+        m_capacity = next_pow2(capacity());
+        m_data = grow(capacity(), false);
+    }
+
+    for (size_type i{size()}; i > offset; --i) {
+        m_data[i] = m_data[i - 1];  // std::move ? Or done automatically on movable objects ?
+    }
+
+    m_data[offset] = val;
+    m_size++;
+
+    return begin() + offset;
+}
+
+template <typename T>
+template <typename... Args>
+constexpr vector<T>::reference vector<T>::emplace_back(Args&&... args)
+    requires std::move_constructible<T>
+{
+    if (size() == capacity()) {
+        m_capacity = next_pow2(capacity());
+        m_data = grow(capacity(), false);
+    }
+
+    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::forward<Args>(args)...);
+    m_size++;
+
+    return m_data[m_size - 1];
+}
+
+template <typename T>
 constexpr void vector<T>::push_back(const_reference value)
     requires std::copy_constructible<T>
 {
-    std::print("push_back(const T&): {0} {1}\n", m_size, m_capacity);
-    if (m_size == m_capacity) {
-        m_capacity = next_pow2(m_capacity);
-        m_data = grow(m_capacity, true);
+    if (size() == capacity()) {
+        m_capacity = next_pow2(capacity());
+        m_data = grow(capacity(), true);
     }
 
     ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(value);
@@ -115,10 +176,9 @@ template <typename T>
 constexpr void vector<T>::push_back(T&& value)
     requires std::move_constructible<T>
 {
-    std::print("push_back(T&&): {0} {1}\n", m_size, m_capacity);
-    if (m_size == m_capacity) {
-        m_capacity = next_pow2(m_capacity);
-        m_data = grow(m_capacity, false);
+    if (size() == capacity()) {
+        m_capacity = next_pow2(capacity());
+        m_data = grow(capacity(), false);
     }
 
     ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::move(value));
@@ -140,6 +200,7 @@ constexpr void vector<T>::reserve(size_type new_cap)
 /*
 ** Private helpers
 */
+
 template <typename T>
 T* vector<T>::grow(size_type new_capacity, bool copy)
 {
@@ -153,7 +214,7 @@ T* vector<T>::grow(size_type new_capacity, bool copy)
 
     // Iterator invalidation
     static_cast<void>(std::destroy_n(begin(), size()));
-    operator delete(m_data);
+    ::operator delete(m_data);
 
     return new_data;
 }

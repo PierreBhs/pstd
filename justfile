@@ -14,6 +14,9 @@ build:
 test:
     ctest --preset conan-release
 
+test-rerun:
+    ctest --preset conan-release --rerun-failed --output-on-failure
+
 run:
     {{build_dir}}/Release/pstd
     

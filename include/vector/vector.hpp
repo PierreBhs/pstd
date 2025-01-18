@@ -22,7 +22,7 @@ public:
     /* Constructors */
 
     constexpr vector() noexcept;
-    constexpr vector(std::initializer_list<T>);
+    constexpr explicit vector(std::initializer_list<T>);
 
     constexpr ~vector();
 
@@ -37,13 +37,18 @@ public:
     [[nodiscard]] constexpr reference       back();
     [[nodiscard]] constexpr const_reference back() const;
 
+    [[nodiscard]] constexpr T*       data() noexcept { return m_data; }
+    [[nodiscard]] constexpr const T* data() const noexcept { return m_data; }
+
     /* Iterators */
 
     [[nodiscard]] constexpr inline iterator       begin() { return &m_data[0]; }
     [[nodiscard]] constexpr inline const_iterator begin() const { return &m_data[0]; }
+    [[nodiscard]] constexpr inline const_iterator cbegin() const noexcept { return &m_data[0]; }
 
     [[nodiscard]] constexpr inline iterator       end() noexcept { return (m_data + size()); }
     [[nodiscard]] constexpr inline const_iterator end() const noexcept { return (m_data + size()); }
+    [[nodiscard]] constexpr inline const_iterator cend() const noexcept { return (m_data + size()); }
     /* Capacity */
 
     //TODO: Switch to begin() == end()
@@ -53,6 +58,16 @@ public:
     constexpr void                           reserve(size_type);
 
     /* Modifiers */
+
+    constexpr void clear() noexcept;
+
+    constexpr iterator insert(const_iterator pos, const T& val);
+    constexpr iterator insert(const_iterator pos, T&& value);
+
+    template <class... Args>
+    constexpr reference emplace_back(Args&&... args)
+        requires std::move_constructible<T>;
+    // Also needs to be EmplaceConstructible, how to check ?
 
     constexpr void push_back(const_reference)
         requires std::copy_constructible<T>;

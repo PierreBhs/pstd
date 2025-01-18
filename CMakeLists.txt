@@ -14,8 +14,6 @@ add_executable(${PROJECT_NAME}
                 ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
-# target_link_libraries(${PROJECT_NAME} PRIVATE raylib raygui)
-
 include(CTest)
 if(BUILD_TESTING)
     add_subdirectory(tests)
