@@ -3,7 +3,7 @@ build_dir := project_dir + "/build"
 
 conan-setup:
     conan install . -u -b missing
-    source build/Release/generators/conanbuild.sh
+    . build/Release/generators/conanbuild.sh
 
 
 # Check how to change name later

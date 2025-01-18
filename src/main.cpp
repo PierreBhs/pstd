@@ -5,8 +5,8 @@
 
 int main()
 {
-    // pstd::vector<pstd::utilities::Lifetime> vec{};
-    pstd::vector<int> vec{1, 2, 3, 4, 5};
+    // pstd::vector<pstd::utilities::Lifetime> vec(5);
+
     // std::print("emplace_back #1\n");
     // vec.emplace_back();
     // std::print("emplace_back #2\n");
@@ -16,24 +16,18 @@ int main()
     // std::print("emplace_back #4\n");
     // vec.push_back({});
 
-    // vec.clear();
+    auto vec{
+        pstd::utilities::generate_random_vector(10, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())};
+    auto vec2{vec};
 
-    // vec.push_back({});
+    vec2.clear();
 
-    // std::print("PUSH_BACK\n");
-    // vec.push_back(3);
-    // vec.emplace_back(2);
+    int a{420};
+    vec.insert(vec.begin() + 5, a);
+    vec2.insert(vec2.begin() + 5, 1111);
 
-    // vec.insert(vec.begin(), 111);
-    auto* it = vec.insert(vec.begin(), 112);
-    // vec.insert(vec.begin() + 4, 113);
-    // vec.insert(vec.end(), 114);
-
-    // std::print("PRINTING FRONT AND BACK\n");
-    // std::print("{0} {1}\n", vec.front(), vec.back());
-
-    std::println("{} {}", (std::size_t)vec.begin(), (std::size_t)it);
     pstd::utilities::print_vector<>(vec);
-    std::print("vec[0] = {} vec[100] = {}\n", vec[0], vec[-1]);
+    pstd::utilities::print_vector<>(vec2);
+
     return 0;
 }

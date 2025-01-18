@@ -1,17 +1,10 @@
 #include "vector/vector.hpp"
 
 #include <print>
+#include <random>
 
 namespace pstd::utilities {
 
-template <typename T>
-void print_vector(const vector<T>& vec)
-{
-    for (auto i{0ul}; i < vec.size(); ++i) {
-        std::print("{} ", vec[i]);
-    }
-    std::println("");
-}
 struct Lifetime
 {
 
@@ -59,5 +52,36 @@ struct Lifetime
     std::size_t id;
     std::string text{};
 };
+
+template <typename T>
+void print_vector(const vector<T>& vec)
+{
+    for (auto i{0ul}; i < vec.size(); ++i) {
+        std::print("{} ", vec[i]);
+    }
+    std::println("");
+}
+
+template <>
+inline void print_vector<Lifetime>(const vector<Lifetime>& vec)
+{
+    for (auto i{0ul}; i < vec.size(); ++i) {
+        std::print("id = {} (active={}, created={}) ", vec[i].id, vec[i].count, vec[i].id);
+    }
+    std::println("");
+}
+
+inline auto generate_random_vector(std::size_t n, int lowerBound, int upperBound)
+{
+    std::random_device rd;
+    std::mt19937       gen{rd()};
+
+    std::uniform_int_distribution<int> dist{lowerBound, upperBound};
+
+    pstd::vector<int> result(n);
+    std::ranges::generate(result, [&] { return dist(gen); });
+
+    return result;
+}
 
 }  // namespace pstd::utilities

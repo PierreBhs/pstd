@@ -22,6 +22,9 @@ public:
     /* Constructors */
 
     constexpr vector() noexcept;
+    explicit constexpr vector(size_type);
+    constexpr vector(size_type, const_reference);
+    constexpr vector(const vector&);
     constexpr explicit vector(std::initializer_list<T>);
 
     constexpr ~vector();
@@ -49,10 +52,10 @@ public:
     [[nodiscard]] constexpr inline iterator       end() noexcept { return (m_data + size()); }
     [[nodiscard]] constexpr inline const_iterator end() const noexcept { return (m_data + size()); }
     [[nodiscard]] constexpr inline const_iterator cend() const noexcept { return (m_data + size()); }
+
     /* Capacity */
 
-    //TODO: Switch to begin() == end()
-    [[nodiscard]] constexpr inline bool      empty() const { return m_size == 0; }
+    [[nodiscard]] constexpr inline bool      empty() const { return begin() == end(); }
     [[nodiscard]] constexpr inline size_type size() const { return m_size; }
     [[nodiscard]] constexpr inline size_type capacity() const { return m_capacity; }
     constexpr void                           reserve(size_type);
@@ -61,8 +64,10 @@ public:
 
     constexpr void clear() noexcept;
 
-    constexpr iterator insert(const_iterator pos, const T& val);
-    constexpr iterator insert(const_iterator pos, T&& value);
+    constexpr iterator insert(const_iterator pos, const T& val)
+        requires(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>);
+    constexpr iterator insert(const_iterator pos, T&& value)
+        requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>);
 
     template <class... Args>
     constexpr reference emplace_back(Args&&... args)

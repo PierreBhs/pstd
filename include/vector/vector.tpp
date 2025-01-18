@@ -1,11 +1,12 @@
 #include "vector/vector.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 
 #include <print>
 
-namespace pstd {
+namespace {
 
 /* Find next power of two for growing capacity */
 uint64_t next_pow2(uint64_t x)
@@ -19,9 +20,35 @@ uint64_t next_pow2(uint64_t x)
     return ++x;
 }
 
+}  // namespace
+
+namespace pstd {
+
 template <typename T>
 constexpr vector<T>::vector() noexcept : m_data{nullptr}, m_size{0}, m_capacity{0}
 {}
+
+template <typename T>
+constexpr vector<T>::vector(size_type n) : m_data{nullptr}, m_size{n}, m_capacity{next_pow2(m_size)}
+{
+    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    std::uninitialized_default_construct_n(begin(), n);
+}
+
+template <typename T>
+constexpr vector<T>::vector(size_type n, const_reference val)
+    : m_data{nullptr}, m_size{n}, m_capacity{next_pow2(m_size)}
+{
+    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    std::uninitialized_fill_n(begin(), n, val);
+}
+
+template <typename T>
+constexpr vector<T>::vector(const vector& other) : m_data(nullptr), m_size(other.size()), m_capacity(other.capacity())
+{
+    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    std::uninitialized_copy_n(other.begin(), m_size, begin());
+}
 
 template <typename T>
 constexpr vector<T>::vector(std::initializer_list<T> init)
@@ -104,6 +131,7 @@ constexpr void vector<T>::clear() noexcept
 
 template <typename T>
 constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val)
+    requires(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>)
 {
     // Need to return an iterator from the const_iterator input
     size_type offset{static_cast<size_type>(pos - cbegin())};
@@ -114,7 +142,7 @@ constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val
     }
 
     for (size_type i{size()}; i > offset; --i) {
-        m_data[i] = m_data[i - 1];  // std::move ? Or done automatically on movable objects ?
+        m_data[i] = m_data[i - 1];
     }
 
     m_data[offset] = std::move(val);
@@ -125,6 +153,7 @@ constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val
 
 template <typename T>
 constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& value)
+    requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
 {
     size_type offset{static_cast<size_type>(pos - cbegin())};
 
@@ -134,10 +163,10 @@ constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& value)
     }
 
     for (size_type i{size()}; i > offset; --i) {
-        m_data[i] = m_data[i - 1];  // std::move ? Or done automatically on movable objects ?
+        m_data[i] = std::move(m_data[i - 1]);  // std::move ? Or done automatically on movable objects ?
     }
 
-    m_data[offset] = val;
+    m_data[offset] = value;
     m_size++;
 
     return begin() + offset;
@@ -218,6 +247,19 @@ T* vector<T>::grow(size_type new_capacity, bool copy)
 
     return new_data;
 }
+
+// Non-member functions
+
+template <class T>
+bool operator==(const vector<T>& lhs, const vector<T>& rhs)
+{
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+}
+
 }  // namespace pstd
 
 // if (copy) {
