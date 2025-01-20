@@ -1,7 +1,10 @@
 #include "vector/vector.hpp"
 
+#include "mem_helpers.hpp"
+
 #include <algorithm>
 #include <cstring>
+#include <iostream>
 #include <memory>
 
 #include <print>
@@ -9,7 +12,7 @@
 namespace {
 
 /* Find next power of two for growing capacity */
-uint64_t next_pow2(uint64_t x)
+constexpr uint64_t next_pow2(uint64_t x)
 {
     if (x <= 1) [[unlikely]] {
         return 2;
@@ -51,6 +54,15 @@ constexpr vector<T>::vector(const vector& other) : m_data(nullptr), m_size(other
 }
 
 template <typename T>
+template <typename InputIt>
+constexpr vector<T>::vector(InputIt first, InputIt last)
+    : m_data(nullptr), m_size(std::distance(first, last)), m_capacity(next_pow2(m_size))
+{
+    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    std::uninitialized_move_n(first, m_size, begin());
+}
+
+template <typename T>
 constexpr vector<T>::vector(std::initializer_list<T> init)
     : m_data{nullptr}, m_size{init.size()}, m_capacity{init.size()}
 {
@@ -65,15 +77,7 @@ constexpr vector<T>::vector(std::initializer_list<T> init)
 template <typename T>
 constexpr vector<T>::~vector()
 {
-    if (m_data == nullptr) {
-        return;
-    }
-
-    for (auto& val : *this) {
-        val.~T();
-    }
-    operator delete(m_data);
-
+    destroy();
     m_size = 0;
     m_capacity = 0;
 }
@@ -138,14 +142,14 @@ constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val
 
     if (size() == capacity()) {
         m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), false);
+        m_data = grow(capacity(), true);
     }
 
     for (size_type i{size()}; i > offset; --i) {
         m_data[i] = m_data[i - 1];
     }
 
-    m_data[offset] = std::move(val);
+    m_data[offset] = val;
     m_size++;
 
     return begin() + offset;
@@ -166,7 +170,7 @@ constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& value)
         m_data[i] = std::move(m_data[i - 1]);  // std::move ? Or done automatically on movable objects ?
     }
 
-    m_data[offset] = value;
+    m_data[offset] = std::move(value);
     m_size++;
 
     return begin() + offset;
@@ -214,6 +218,28 @@ constexpr void vector<T>::push_back(T&& value)
     m_size++;
 }
 
+template <typename T>
+constexpr void vector<T>::resize(size_type count)
+    requires(std::is_move_constructible_v<T> && std::is_default_constructible_v<T>)
+{
+    if (count > size()) {
+        default_append(count - size());
+    } else if (count < size()) {
+        erase_at_end(begin() + count);
+    }
+}
+
+template <typename T>
+constexpr void vector<T>::resize(size_type count, const_reference value)
+    requires std::is_copy_constructible_v<T>
+{
+    if (count > size()) {
+        append(count - size(), value);
+    } else if (count < size()) {
+        erase_at_end(begin() + count);
+    }
+}
+
 /*
 ** Capacity
 */
@@ -231,9 +257,9 @@ constexpr void vector<T>::reserve(size_type new_cap)
 */
 
 template <typename T>
-T* vector<T>::grow(size_type new_capacity, bool copy)
+constexpr T* vector<T>::grow(size_type new_capacity, bool copy)
 {
-    T* new_data = static_cast<T*>(::operator new(new_capacity * sizeof(T)));
+    T* new_data{allocate(new_capacity)};
 
     if (copy) {
         std::uninitialized_copy_n(begin(), size(), new_data);
@@ -242,10 +268,100 @@ T* vector<T>::grow(size_type new_capacity, bool copy)
     }
 
     // Iterator invalidation
-    static_cast<void>(std::destroy_n(begin(), size()));
-    ::operator delete(m_data);
+    destroy();
 
     return new_data;
+}
+
+template <typename T>
+constexpr T* vector<T>::allocate(size_type n)
+{
+    return static_cast<T*>(::operator new(sizeof(value_type) * n));
+}
+
+template <typename T>
+constexpr void vector<T>::destroy()
+{
+    std::destroy_n(begin(), size());
+    ::operator delete(m_data);
+}
+
+template <typename T>
+constexpr void vector<T>::default_append(size_type n)
+{
+    if (n == 0) {
+        return;
+    }
+
+    const auto curr_size{size()};
+    const auto available_size{capacity() - size()};
+
+    if (size() > max_size() || available_size > max_size() - curr_size) {
+        return;  // unreachable;
+    }
+
+    // Append to the end if sufficient space, else grow the vector
+    if (available_size >= n) {
+        // Would std::uninitialized_value_construct_n work better here ?
+        pstd::mem::uninitialized_default_construct_n(end(), n);
+        m_size += n;
+    } else {
+        const auto new_len{curr_size + n};
+        const auto new_cap{next_pow2(new_len)};
+        auto*      new_data{allocate(new_cap)};
+
+        pstd::mem::uninitialized_default_construct_n(new_data + curr_size, n);
+        std::uninitialized_move_n(begin(), curr_size, new_data);
+
+        destroy();
+
+        m_data = new_data;
+        m_size = new_len;
+        m_capacity = new_cap;
+    }
+}
+
+template <typename T>
+constexpr void vector<T>::append(size_type n, const_reference val)
+{
+    if (n == 0) {
+        return;
+    }
+
+    const auto curr_size{size()};
+    const auto available_size{capacity() - size()};
+
+    if (size() > max_size() || available_size > max_size() - curr_size) {
+        return;  // unreachable;
+    }
+
+    // Append to the end if sufficient space, else grow the vector
+    if (available_size >= n) {
+        std::uninitialized_fill_n(end(), n, val);
+        m_size += n;
+    } else {
+        const auto new_len{curr_size + n};
+        const auto new_cap{next_pow2(new_len)};
+        auto*      new_data{allocate(new_cap)};
+
+        std::uninitialized_fill_n(new_data + curr_size, n, val);
+        std::uninitialized_move_n(begin(), curr_size, new_data);  // copy_n ?
+
+        destroy();
+
+        m_data = new_data;
+        m_size = new_len;
+        m_capacity = new_cap;
+    }
+}
+
+template <typename T>
+constexpr void vector<T>::erase_at_end(pointer pos)
+{
+    if (size_type n = end() - pos) {
+        std::destroy_n(pos, n);
+        m_size = pos - begin();  // hopefully not modified in between ? >:(
+    }
 }
 
 // Non-member functions

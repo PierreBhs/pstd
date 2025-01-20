@@ -3,6 +3,7 @@
 #include <random>
 #include <string>
 
+#include "utilities.hpp"
 #include "vector/vector.hpp"
 
 auto generate_random_vector(std::size_t n, int lowerBound, int upperBound)
@@ -75,6 +76,15 @@ TYPED_TEST(vector_test, copy_constructor)
     }
 }
 
+TEST(vector_test, iterator_constructor)
+{
+    const auto                rg = {"cat", "cow", "crow"};
+    pstd::vector<std::string> vec{rg.begin(), rg.end()};
+    EXPECT_EQ(vec.size(), 3);
+    EXPECT_EQ(vec.front(), "cat");
+    EXPECT_EQ(vec.back(), "crow");
+}
+
 TYPED_TEST(vector_test, initializer_list_constructor)
 {
     auto vec{createTestValues<TypeParam>()};
@@ -123,6 +133,105 @@ TEST(vector_test, insert_overload1)
     EXPECT_EQ(inserted, vec.begin());
     EXPECT_EQ(*inserted_end, 111);
     EXPECT_EQ(inserted_end, vec.end() - 1);
+}
+
+TEST(vector_test, resize)
+{
+    pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};
+
+    auto old_capacity{vec.capacity()};
+    vec.resize(12);
+    EXPECT_EQ(vec.size(), 12);
+    for (auto i{0ul}; i < 8; ++i) {
+        EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+    }
+    for (auto i{8ul}; i < 12; ++i) {
+        EXPECT_EQ(vec[i], 0);
+    }
+
+    EXPECT_GE(vec.capacity(), old_capacity);
+
+    // Test increasing size beyond current capacity to force reallocation
+    old_capacity = vec.capacity();
+    vec.resize(old_capacity + 10);
+    EXPECT_EQ(vec.size(), old_capacity + 10);
+    for (auto i{0ul}; i < 12; ++i) {
+        if (i < 8) {
+            EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+        } else {
+            EXPECT_EQ(vec[i], 0);
+        }
+    }
+    for (auto i{12ul}; i < vec.size(); ++i) {
+        EXPECT_EQ(vec[i], 0);
+    }
+    EXPECT_GT(vec.capacity(), old_capacity);
+
+    // Test decreasing size
+    vec.resize(5);
+    EXPECT_EQ(vec.size(), 5);
+    for (auto i{0ul}; i < 5; ++i) {
+        EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+    }
+
+    // Test resizing to zero
+    vec.resize(0);
+    EXPECT_EQ(vec.size(), 0);
+    EXPECT_TRUE(vec.empty());
+}
+
+TEST(vector_test, resize_with_value)
+{
+    pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};
+
+    vec.resize(12, 42);
+
+    EXPECT_EQ(vec.size(), 12u);
+    EXPECT_GE(vec.capacity(), 12u);
+    for (size_t i = 0; i < 8; ++i) {
+        EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+    }
+    for (size_t i = 8; i < 12; ++i) {
+        EXPECT_EQ(vec[i], 42);
+    }
+
+    // Resize Up Beyond Current Capacity: Append elements with value 99
+    auto old_capacity = vec.capacity();
+    vec.resize(old_capacity + 10, 99);
+
+    EXPECT_EQ(vec.size(), old_capacity + 10);
+    EXPECT_GE(vec.capacity(), old_capacity + 10);
+    for (size_t i = 0; i < 8; ++i) {
+        EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+    }
+    for (size_t i = 8; i < 12; ++i) {
+        EXPECT_EQ(vec[i], 42);
+    }
+    for (size_t i = 12; i < vec.size(); ++i) {
+        EXPECT_EQ(vec[i], 99);
+    }
+
+    vec.resize(5, 42);
+    EXPECT_EQ(vec.size(), 5u);
+    for (size_t i = 0; i < 5; ++i) {
+        EXPECT_EQ(vec[i], static_cast<int>(i + 1));
+    }
+
+    // Resize to Zero: Clear the vector, ignoring the value 0
+    vec.resize(0, 0);
+
+    EXPECT_EQ(vec.size(), 0u);
+    EXPECT_TRUE(vec.empty());
+
+    vec.resize(3, 7);
+    EXPECT_EQ(vec.size(), 3u);
+    for (size_t i = 0; i < vec.size(); ++i) {
+        EXPECT_EQ(vec[i], 7);
+    }
+
+    vec.resize(0, 100);
+    EXPECT_EQ(vec.size(), 0u);
+    EXPECT_TRUE(vec.empty());
 }
 
 TEST(vector_test, reverse)
