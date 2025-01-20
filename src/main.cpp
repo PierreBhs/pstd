@@ -8,9 +8,10 @@ int main()
     // auto vec2{std::move(vec)};
     pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};
 
-    std::println("size {} cap {}", vec.size(), vec.capacity());
-    vec.resize(2, 5);
-    std::println("size {} cap {}", vec.size(), vec.capacity());
+    vec.pop_back();
+    vec.pop_back();
+    vec.pop_back();
+    vec.pop_back();
     pstd::utilities::print_vector<>(vec);
 
     return 0;

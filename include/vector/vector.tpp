@@ -219,6 +219,17 @@ constexpr void vector<T>::push_back(T&& value)
 }
 
 template <typename T>
+constexpr void vector<T>::pop_back()
+{
+    if (empty()) {
+        return;
+    }
+
+    m_size--;
+    std::destroy_at(end());
+}
+
+template <typename T>
 constexpr void vector<T>::resize(size_type count)
     requires(std::is_move_constructible_v<T> && std::is_default_constructible_v<T>)
 {

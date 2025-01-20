@@ -234,6 +234,35 @@ TEST(vector_test, resize_with_value)
     EXPECT_TRUE(vec.empty());
 }
 
+TEST(vector_test, pop_back)
+{
+    pstd::vector<int> vec{1, 2, 3, 4, 5};
+
+    EXPECT_EQ(vec.size(), 5u);
+    EXPECT_EQ(vec.back(), 5);
+
+    vec.pop_back();
+    EXPECT_EQ(vec.size(), 4u);
+    EXPECT_EQ(vec.back(), 4);
+
+    while (!vec.empty()) {
+        auto previous_size{vec.size()};
+        auto previous_back{vec.back()};
+        vec.pop_back();
+        EXPECT_EQ(vec.size(), previous_size - 1);
+        if (!vec.empty()) {
+            EXPECT_LT(vec.back(), previous_back);
+        }
+    }
+
+    EXPECT_EQ(vec.size(), 0u);
+    EXPECT_TRUE(vec.empty());
+
+    vec.pop_back();
+    EXPECT_EQ(vec.size(), 0u);
+    EXPECT_TRUE(vec.empty());
+}
+
 TEST(vector_test, reverse)
 {
     auto vec{generate_random_vector(1000, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())};

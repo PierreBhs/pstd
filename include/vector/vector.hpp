@@ -92,6 +92,8 @@ public:
     constexpr void push_back(T&& value)
         requires std::move_constructible<value_type>;
 
+    constexpr void pop_back();
+
     constexpr void resize(size_type)
         requires(std::is_move_constructible_v<value_type> && std::is_default_constructible_v<value_type>);
     constexpr void resize(size_type, const_reference)
