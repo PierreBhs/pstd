@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <memory>
+#include <utility>
 
 #include <print>
 
@@ -63,6 +63,13 @@ constexpr vector<T>::vector(InputIt first, InputIt last)
 }
 
 template <typename T>
+constexpr vector<T>::vector(vector&& other) noexcept
+    : m_data(std::exchange(other.m_data, nullptr)),
+      m_size(std::exchange(other.m_size, 0)),
+      m_capacity(std::exchange(other.m_capacity, 0))
+{}
+
+template <typename T>
 constexpr vector<T>::vector(std::initializer_list<T> init)
     : m_data{nullptr}, m_size{init.size()}, m_capacity{init.size()}
 {
@@ -87,15 +94,25 @@ constexpr vector<T>::~vector()
 */
 
 template <typename T>
+template <typename Self>
+constexpr auto&& vector<T>::at(this Self&& self, size_type pos)
+{
+    if (pos >= self.size()) {
+        throw std::out_of_range{std::format("pstd::vector::at: pos:{} >= size:{} ", pos, self.size())};
+    }
+    return self[pos];  // do no return self.m_data[pos], otherwise non const correctness !
+}
+
+template <typename T>
 constexpr T& vector<T>::operator[](size_type pos)
 {
-    return m_data[pos];
+    return *(m_data + pos);
 }
 
 template <typename T>
 constexpr const T& vector<T>::operator[](size_type pos) const
 {
-    return m_data[pos];
+    return *(m_data + pos);
 }
 
 template <typename T>
@@ -294,7 +311,10 @@ template <typename T>
 constexpr void vector<T>::destroy()
 {
     std::destroy_n(begin(), size());
-    ::operator delete(m_data);
+    if (m_data) {
+        ::operator delete(m_data);
+        m_data = nullptr;
+    }
 }
 
 template <typename T>

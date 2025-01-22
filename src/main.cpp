@@ -1,18 +1,25 @@
 #include "utilities.hpp"
 #include "vector/vector.hpp"
 
+template <typename>
+struct TD;
+
 int main()
 {
-    // auto vec{
-    //     pstd::utilities::generate_random_vector(10, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())};
-    // auto vec2{std::move(vec)};
-    pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};
+    pstd::vector<int> vec{1, 2, 3, 4};
+    auto              vec2{std::move(vec)};
 
-    vec.pop_back();
-    vec.pop_back();
-    vec.pop_back();
-    vec.pop_back();
-    pstd::utilities::print_vector<>(vec);
+    std::println("{}", vec2[2]);
 
     return 0;
 }
+
+// auto vec{
+//     pstd::utilities::generate_random_vector(10, std::numeric_limits<int>::min(), std::numeric_limits<int>::max())};
+// auto vec2{std::move(vec)};
+// pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};
+
+// const int& pos2{vec.at(2)};
+// std::println("{} {}", vec.at(4), pos2);
+
+// pstd::utilities::print_vector<>(vec);

@@ -35,13 +35,16 @@ public:
     template <typename InputIt>
     constexpr vector(InputIt first, InputIt last);
 
-    constexpr vector(vector&&) noexcept = default;
+    constexpr vector(vector&&) noexcept;
 
     constexpr explicit vector(std::initializer_list<value_type>);
 
     constexpr ~vector();
 
     /* Element access */
+
+    template <class Self>
+    constexpr auto&& at(this Self&&, size_type);
 
     [[nodiscard]] constexpr reference       operator[](size_type);
     [[nodiscard]] constexpr const_reference operator[](size_type) const;

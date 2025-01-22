@@ -85,6 +85,26 @@ TEST(vector_test, iterator_constructor)
     EXPECT_EQ(vec.back(), "crow");
 }
 
+TYPED_TEST(vector_test, move_constructor)
+{
+    auto original{createTestValues<TypeParam>()};
+    ASSERT_FALSE(original.empty());
+
+    const auto originalSize{original.size()};
+    const auto originalFront{original.front()};
+    const auto originalBack{original.back()};
+
+    auto moved{std::move(original)};
+
+    EXPECT_EQ(originalSize, moved.size());
+    if (!moved.empty()) {
+        EXPECT_EQ(originalFront, moved.front());
+        EXPECT_EQ(originalBack, moved.back());
+    }
+
+    EXPECT_TRUE(original.empty());
+}
+
 TYPED_TEST(vector_test, initializer_list_constructor)
 {
     auto vec{createTestValues<TypeParam>()};
@@ -103,6 +123,56 @@ TYPED_TEST(vector_test, initializer_list_constructor)
         EXPECT_EQ(vec.front().x, 1.f);
         EXPECT_EQ(vec.back().s, "third");
     }
+}
+
+TEST(vector_test, at_unified)
+{
+    {
+        pstd::vector<int> vec;
+        vec.resize(3);
+        vec[0] = 10;
+        vec[1] = 20;
+        vec[2] = 30;
+
+        auto& val0 = vec.at(0);
+        EXPECT_EQ(val0, 10);
+        val0 = 42;
+        EXPECT_EQ(vec[0], 42);
+
+        auto& val1 = vec.at(1);
+        EXPECT_EQ(val1, 20);
+    }
+
+    {
+        pstd::vector<int> vec;
+        vec.resize(2);
+        vec[0] = 111;
+        vec[1] = 222;
+
+        const auto& const_vec = vec;
+        auto&       const_ref = const_vec.at(1);
+        // static_assert(std::is_same_v<decltype(const_ref), const int&>);
+        EXPECT_EQ(const_ref, 222);
+    }
+
+    {
+        pstd::vector<int> vec;
+        vec.resize(3);
+        vec[0] = 10;
+        vec[1] = 20;
+        vec[2] = 30;
+
+        EXPECT_NO_THROW(vec.at(2));
+
+        EXPECT_THROW(vec.at(3), std::out_of_range);
+        EXPECT_THROW(vec.at(999), std::out_of_range);
+    }
+
+    // {
+    //     auto&& x = pstd::vector<int>{10, 20, 30}.at(1);
+    //     static_assert(std::is_rvalue_reference_v<decltype(x)>);
+    //     EXPECT_EQ(x, 20);
+    // }
 }
 
 TYPED_TEST(vector_test, operator_bracket)
