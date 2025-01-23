@@ -7,8 +7,6 @@
 #include <memory>
 #include <utility>
 
-#include <print>
-
 namespace {
 
 /* Find next power of two for growing capacity */
@@ -34,7 +32,7 @@ constexpr vector<T>::vector() noexcept : m_data{nullptr}, m_size{0}, m_capacity{
 template <typename T>
 constexpr vector<T>::vector(size_type n) : m_data{nullptr}, m_size{n}, m_capacity{next_pow2(m_size)}
 {
-    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    m_data = allocate(m_capacity);
     std::uninitialized_default_construct_n(begin(), n);
 }
 
@@ -42,7 +40,7 @@ template <typename T>
 constexpr vector<T>::vector(size_type n, const_reference val)
     : m_data{nullptr}, m_size{n}, m_capacity{next_pow2(m_size)}
 {
-    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    m_data = allocate(m_capacity);
     std::uninitialized_fill_n(begin(), n, val);
 }
 
@@ -58,7 +56,7 @@ template <typename InputIt>
 constexpr vector<T>::vector(InputIt first, InputIt last)
     : m_data(nullptr), m_size(std::distance(first, last)), m_capacity(next_pow2(m_size))
 {
-    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    m_data = allocate(m_capacity);
     std::uninitialized_move_n(first, m_size, begin());
 }
 
@@ -71,9 +69,9 @@ constexpr vector<T>::vector(vector&& other) noexcept
 
 template <typename T>
 constexpr vector<T>::vector(std::initializer_list<T> init)
-    : m_data{nullptr}, m_size{init.size()}, m_capacity{init.size()}
+    : m_data{nullptr}, m_size{init.size()}, m_capacity{next_pow2(init.size())}
 {
-    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    m_data = allocate(m_capacity);
 
     size_type index{0ul};
     for (const auto& elem : init) {
@@ -87,6 +85,89 @@ constexpr vector<T>::~vector()
     destroy();
     m_size = 0;
     m_capacity = 0;
+}
+
+template <typename T>
+constexpr vector<T>& vector<T>::operator=(const vector& other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    auto o_size{other.size()};
+    auto o_cap{other.capacity()};
+
+    if (o_size > capacity()) {
+        auto* new_data{allocate(o_cap)};
+        std::uninitialized_copy_n(other.begin(), o_size, new_data);
+
+        destroy();
+
+        m_data = new_data;
+        m_size = o_size;
+        m_capacity = o_cap;
+    } else if (o_size < size()) {
+        std::copy_n(other.begin(), o_size, begin());
+        std::destroy_n(begin() + o_size, size() - o_size);
+        m_size = o_size;
+    } else {
+        // size < o_size <= capacity
+        std::copy_n(other.begin(), size(), begin());
+        std::uninitialized_copy_n(other.begin() + size(), o_size - size(), end());
+        m_size = o_size;
+    }
+
+    return *this;
+}
+
+template <typename T>
+vector<T>& vector<T>::operator=(vector&& other) noexcept
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    destroy();
+    m_data = other.m_data;
+    m_size = other.m_size;
+    m_capacity = other.m_capacity;
+
+    other.m_data = nullptr;
+    other.m_size = 0;
+    other.m_capacity = 0;
+
+    return *this;
+}
+
+template <typename T>
+constexpr vector<T>& vector<T>::operator=(std::initializer_list<value_type> init_list)
+{
+    const auto new_size{init_list.size()};
+    const auto new_cap{next_pow2(new_size)};
+
+    if (new_size > capacity()) {
+        auto new_data{allocate(new_cap)};
+        std::uninitialized_copy(init_list.begin(), init_list.end(), new_data);
+
+        destroy();
+
+        m_data = new_data;
+        m_size = new_size;
+        m_capacity = new_cap;
+    } else if (size() >= new_size) {
+        auto new_end = std::copy(init_list.begin(), init_list.end(), begin());
+        erase_at_end(new_end);
+    } else {
+        // size < new_size <= capacity
+        auto mid{init_list.begin()};
+        std::advance(mid, size());
+        std::copy(init_list.begin(), mid, begin());
+
+        auto new_end{std::uninitialized_copy(mid, init_list.end(), end())};
+        m_size = static_cast<size_type>(new_end - begin());
+    }
+
+    return *this;
 }
 
 /*

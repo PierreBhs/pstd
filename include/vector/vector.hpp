@@ -41,6 +41,11 @@ public:
 
     constexpr ~vector();
 
+    // Pain in the chocolat, not following the std
+    constexpr vector& operator=(const vector&);
+    vector&           operator=(vector&&) noexcept;
+    constexpr vector& operator=(std::initializer_list<value_type>);
+
     /* Element access */
 
     template <class Self>

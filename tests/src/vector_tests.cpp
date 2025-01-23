@@ -125,6 +125,51 @@ TYPED_TEST(vector_test, initializer_list_constructor)
     }
 }
 
+TYPED_TEST(vector_test, copy_assignment)
+{
+    auto source_vec{createTestValues<TypeParam>()};
+    ASSERT_FALSE(source_vec.empty());
+
+    pstd::vector<TypeParam> dest_vec{TypeParam{}, TypeParam{}};
+    EXPECT_EQ(dest_vec.size(), 2u);
+
+    dest_vec = source_vec;
+
+    EXPECT_EQ(dest_vec.size(), source_vec.size());
+    for (std::size_t i = 0; i < source_vec.size(); ++i) {
+        EXPECT_EQ(dest_vec[i], source_vec[i]);
+    }
+
+    dest_vec = dest_vec;
+    EXPECT_EQ(dest_vec.size(), source_vec.size());
+    for (std::size_t i = 0; i < source_vec.size(); ++i) {
+        EXPECT_EQ(dest_vec[i], source_vec[i]);
+    }
+}
+
+TYPED_TEST(vector_test, move_assignment)
+{
+    auto source_vec{createTestValues<TypeParam>()};
+    ASSERT_FALSE(source_vec.empty());
+
+    const auto original_size{source_vec.size()};
+    const auto original_front{source_vec.front()};
+    const auto original_back{source_vec.back()};
+
+    pstd::vector<TypeParam> dest_vec{TypeParam{}, TypeParam{}};
+    EXPECT_EQ(dest_vec.size(), 2u);
+
+    dest_vec = std::move(source_vec);
+
+    EXPECT_EQ(dest_vec.size(), original_size);
+    if (!dest_vec.empty()) {
+        EXPECT_EQ(dest_vec.front(), original_front);
+        EXPECT_EQ(dest_vec.back(), original_back);
+    }
+
+    EXPECT_TRUE(source_vec.empty());
+}
+
 TEST(vector_test, at_unified)
 {
     {
