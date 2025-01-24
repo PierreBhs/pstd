@@ -3,6 +3,7 @@
 #include <concepts>
 #include <cstddef>
 #include <initializer_list>
+#include <iterator>
 #include <limits>
 
 namespace pstd {
@@ -19,6 +20,8 @@ public:
     using const_reference = const T&;
     using iterator = T*;
     using const_iterator = const T*;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     using difference_type = std::ptrdiff_t;
     using size_type = std::size_t;
 
@@ -72,6 +75,20 @@ public:
     [[nodiscard]] constexpr inline iterator       end() noexcept { return (m_data + size()); }
     [[nodiscard]] constexpr inline const_iterator end() const noexcept { return (m_data + size()); }
     [[nodiscard]] constexpr inline const_iterator cend() const noexcept { return (m_data + size()); }
+
+    [[nodiscard]] constexpr inline reverse_iterator       rbegin() { return reverse_iterator(end()); }
+    [[nodiscard]] constexpr inline const_reverse_iterator rbegin() const { return const_reverse_iterator(end()); }
+    [[nodiscard]] constexpr inline const_reverse_iterator crbegin() const noexcept
+    {
+        return const_reverse_iterator(end());
+    }
+
+    [[nodiscard]] constexpr inline reverse_iterator       rend() { return reverse_iterator(begin()); }
+    [[nodiscard]] constexpr inline const_reverse_iterator rend() const { return const_reverse_iterator(begin()); }
+    [[nodiscard]] constexpr inline const_reverse_iterator crend() const noexcept
+    {
+        return const_reverse_iterator(begin());
+    }
 
     /* Capacity */
 

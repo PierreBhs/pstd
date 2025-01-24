@@ -47,7 +47,7 @@ constexpr vector<T>::vector(size_type n, const_reference val)
 template <typename T>
 constexpr vector<T>::vector(const vector& other) : m_data(nullptr), m_size(other.size()), m_capacity(other.capacity())
 {
-    m_data = static_cast<T*>(operator new(sizeof(value_type) * m_capacity));
+    m_data = allocate(m_capacity);
     std::uninitialized_copy_n(other.begin(), m_size, begin());
 }
 
@@ -287,7 +287,7 @@ constexpr vector<T>::reference vector<T>::emplace_back(Args&&... args)
     ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::forward<Args>(args)...);
     m_size++;
 
-    return m_data[m_size - 1];
+    return m_data[size() - 1];
 }
 
 template <typename T>
