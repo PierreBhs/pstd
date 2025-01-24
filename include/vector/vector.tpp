@@ -235,41 +235,34 @@ template <typename T>
 constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, const T& val)
     requires(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>)
 {
-    // Need to return an iterator from the const_iterator input
-    size_type offset{static_cast<size_type>(pos - cbegin())};
-
-    if (size() == capacity()) {
-        m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), true);
-    }
-
-    for (size_type i{size()}; i > offset; --i) {
-        m_data[i] = m_data[i - 1];
-    }
-
-    m_data[offset] = val;
-    m_size++;
-
-    return begin() + offset;
+    return emplace(pos, val);
 }
 
 template <typename T>
-constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& value)
+constexpr vector<T>::iterator vector<T>::insert(const_iterator pos, T&& val)
     requires(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>)
 {
-    size_type offset{static_cast<size_type>(pos - cbegin())};
+    return emplace(pos, std::move(val));
+}
 
-    if (size() == capacity()) {
-        m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), false);
+template <typename T>
+template <typename... Args>
+constexpr vector<T>::iterator vector<T>::emplace(const_iterator pos, Args&&... args)
+{
+    const auto offset{pos - cbegin()};
+    if (size() != capacity()) {
+        if (pos == cend()) {
+            std::construct_at(std::addressof(*(begin() + size())), std::forward<Args>(args)...);
+            m_size++;
+        } else {
+            // args... may directly or indirectly refer to a value in the container.
+            // need a tmp
+            T tmp(std::forward<Args>(args)...);
+            insert_uref(begin() + offset, std::move(tmp));
+        }
+    } else {
+        insert_realloc(begin() + offset, std::forward<Args>(args)...);
     }
-
-    for (size_type i{size()}; i > offset; --i) {
-        m_data[i] = std::move(m_data[i - 1]);  // std::move ? Or done automatically on movable objects ?
-    }
-
-    m_data[offset] = std::move(value);
-    m_size++;
 
     return begin() + offset;
 }
@@ -281,10 +274,11 @@ constexpr vector<T>::reference vector<T>::emplace_back(Args&&... args)
 {
     if (size() == capacity()) {
         m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), false);
+        m_data = grow(capacity());
     }
 
-    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::forward<Args>(args)...);
+    // ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::forward<Args>(args)...);
+    std::construct_at(std::addressof(*(m_data + size())), std::forward<Args>(args)...);
     m_size++;
 
     return m_data[size() - 1];
@@ -296,10 +290,11 @@ constexpr void vector<T>::push_back(const_reference value)
 {
     if (size() == capacity()) {
         m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), true);
+        m_data = grow(capacity());
     }
 
-    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(value);
+    // ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(value);
+    std::construct_at(std::addressof(*(m_data + size())), value);
     m_size++;
 }
 
@@ -309,10 +304,11 @@ constexpr void vector<T>::push_back(T&& value)
 {
     if (size() == capacity()) {
         m_capacity = next_pow2(capacity());
-        m_data = grow(capacity(), false);
+        m_data = grow(capacity());
     }
 
-    ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::move(value));
+    // ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::move(value));
+    std::construct_at(std::addressof(*(m_data + size())), std::move(value));
     m_size++;
 }
 
@@ -357,7 +353,7 @@ template <typename T>
 constexpr void vector<T>::reserve(size_type new_cap)
 {
     if (new_cap > m_capacity) {
-        m_data = grow(new_cap, false);
+        m_data = grow(new_cap);
     }
 }
 
@@ -366,19 +362,17 @@ constexpr void vector<T>::reserve(size_type new_cap)
 */
 
 template <typename T>
-constexpr T* vector<T>::grow(size_type new_capacity, bool copy)
+constexpr T* vector<T>::grow(size_type new_capacity)
 {
-    T* new_data{allocate(new_capacity)};
+    auto* new_data{allocate(new_capacity)};
 
-    if (copy) {
-        std::uninitialized_copy_n(begin(), size(), new_data);
-    } else {
+    if constexpr (std::is_nothrow_move_constructible_v<T> || !std::is_copy_constructible_v<T>) {
         std::uninitialized_move_n(begin(), size(), new_data);
+    } else {
+        std::uninitialized_copy_n(begin(), size(), new_data);
     }
 
-    // Iterator invalidation
     destroy();
-
     return new_data;
 }
 
@@ -468,6 +462,70 @@ constexpr void vector<T>::append(size_type n, const_reference val)
 }
 
 template <typename T>
+template <typename VAL_T>
+constexpr void vector<T>::insert_uref(iterator pos, VAL_T&& val)
+{
+
+    if (size() == 0 || pos == end()) {
+        std::construct_at(std::addressof(*(begin() + size())), std::forward<VAL_T>(val));
+        ++m_size;
+        return;
+    }
+
+    // move last element into the free slot (insert only called when it exists)
+    std::construct_at(std::addressof(*(end())), std::move(*(end() - 1)));
+    m_size++;
+
+    // move [pos, end() -1) by one slot
+    std::move_backward(pos, end() - 1, end());
+    *pos = std::forward<VAL_T>(val);
+}
+
+template <typename T>
+template <typename... Args>
+constexpr void vector<T>::insert_realloc(iterator pos, Args&&... args)
+{
+    // since m_data can be a nullptr, avoid compiler thinking we could do
+    // a uninit_move
+    if (size() == 0) {
+        auto  new_capacity{next_pow2(capacity())};
+        auto* new_data{allocate(new_capacity)};
+
+        std::construct_at(new_data, std::forward<Args>(args)...);
+
+        destroy();
+        m_data = new_data;
+        m_size = 1;
+        m_capacity = new_capacity;
+
+        return;  // ensure we do NOT do any pointer arithmetic with null pointers
+    }
+
+    auto  new_capacity{next_pow2(capacity())};
+    auto* new_data{allocate(new_capacity)};
+
+    const auto old_size{size()};
+    const auto new_size = old_size + 1;
+
+    const auto elems_before = static_cast<size_type>(pos - begin());
+
+    auto* new_finish = new_data;
+
+    auto* const where = new_data + elems_before;
+    std::construct_at(where, std::forward<Args>(args)...);
+    new_finish = std::uninitialized_move(begin(), pos, new_data);
+
+    ++new_finish;
+
+    new_finish = std::uninitialized_move(pos, end(), new_finish);
+
+    destroy();
+    m_data = new_data;
+    m_size = new_size;
+    m_capacity = new_capacity;
+}
+
+template <typename T>
 constexpr void vector<T>::erase_at_end(pointer pos)
 {
     if (size_type n = end() - pos) {
@@ -499,6 +557,9 @@ bool operator==(const vector<T>& lhs, const vector<T>& rhs)
 // } else {
 //     std::uninitialized_move_n(begin(), size(), new_data);
 // }
+
+// construct_at
+// -> ::new (static_cast<T*>(std::addressof(*(m_data + size())))) T(std::move(value));
 
 // // Iterator invalidation
 // static_cast<void>(std::destroy_n(begin(), size()));

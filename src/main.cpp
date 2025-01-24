@@ -8,14 +8,13 @@ struct TD;
 
 int main()
 {
-    pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
-    pstd::vector<int> vec2{55, 55, 55, 55, 55, 55, 5, 5, 5};
+    pstd::vector<int> vec{};
 
-    std::println("{} {} | {} {}", vec.size(), vec.capacity(), vec2.size(), vec2.capacity());
-    vec2 = std::move(vec);
+    vec.emplace(vec.begin(), 35);
+    vec.emplace(vec.begin(), 25);
+    vec.emplace(vec.begin(), 135);
 
-    std::println("{} {} | {} {}", vec.size(), vec.capacity(), vec2.size(), vec2.capacity());
-    std::println("{}", vec2[11]);
+    std::println("{} {} {}", vec[0], vec[1], vec[2]);
 
     return 0;
 }

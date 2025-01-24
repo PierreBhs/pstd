@@ -250,6 +250,99 @@ TEST(vector_test, insert_overload1)
     EXPECT_EQ(inserted_end, vec.end() - 1);
 }
 
+TEST(VectorEmplaceTest, EmplaceAtEmpty)
+{
+    pstd::vector<int> vec;
+    EXPECT_EQ(vec.size(), 0u);
+
+    // Emplace in an empty vector at begin()
+    auto it = vec.emplace(vec.begin(), 42);
+    EXPECT_EQ(vec.size(), 1u);
+    EXPECT_EQ(*it, 42);
+    // EXPECT_EQ(vec[0], 42);
+}
+
+TEST(VectorEmplaceTest, EmplaceAtFront)
+{
+    pstd::vector<int> vec{10, 20, 30};
+    EXPECT_EQ(vec.size(), 3u);
+
+    auto it = vec.emplace(vec.begin(), 5);
+    EXPECT_EQ(vec.size(), 4u);
+    EXPECT_EQ(*it, 5);
+    EXPECT_EQ(vec[0], 5);
+    EXPECT_EQ(vec[1], 10);
+    EXPECT_EQ(vec[2], 20);
+    EXPECT_EQ(vec[3], 30);
+}
+
+TEST(VectorEmplaceTest, EmplaceInMiddle)
+{
+    pstd::vector<int> vec{10, 20, 30, 40};
+    auto              pos = vec.begin() + 2;
+    auto              it = vec.emplace(pos, 25);
+
+    EXPECT_EQ(vec.size(), 5u);
+    EXPECT_EQ(*it, 25);
+    EXPECT_EQ(vec[2], 25);
+    EXPECT_EQ(vec[3], 30);
+}
+
+TEST(VectorEmplaceTest, EmplaceAtBack)
+{
+    pstd::vector<int> vec{1, 2, 3};
+    auto              it = vec.emplace(vec.end(), 4);
+    EXPECT_EQ(vec.size(), 4u);
+    EXPECT_EQ(*it, 4);
+    EXPECT_EQ(vec.back(), 4);
+}
+
+TEST(VectorEmplaceTest, EmplaceWithReallocation)
+{
+    pstd::vector<int> vec;
+    vec.reserve(3);
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+
+    EXPECT_EQ(vec.size(), 3u);
+    EXPECT_EQ(vec.capacity(), 4u);
+
+    auto it = vec.emplace(vec.end(), 99);
+    EXPECT_GE(vec.capacity(), 4u);
+    EXPECT_EQ(vec.size(), 4u);
+    EXPECT_EQ(*it, 99);
+    // Expect [1, 2, 3, 99]
+    EXPECT_EQ(vec[3], 99);
+}
+
+TEST(VectorEmplaceTest, EmplaceMoveOnlyType)
+{
+    struct MoveOnly
+    {
+        int value;
+        MoveOnly(int v) : value(v) {}
+        MoveOnly(const MoveOnly&) = delete;
+        MoveOnly(MoveOnly&&) noexcept = default;
+        MoveOnly& operator=(const MoveOnly&) = delete;
+        MoveOnly& operator=(MoveOnly&&) noexcept = default;
+    };
+
+    pstd::vector<MoveOnly> vec;
+    vec.emplace_back(10);
+    vec.emplace_back(20);
+    EXPECT_EQ(vec.size(), 2u);
+    EXPECT_EQ(vec[0].value, 10);
+    EXPECT_EQ(vec[1].value, 20);
+
+    auto it = vec.emplace(vec.begin(), 5);
+    EXPECT_EQ(vec.size(), 3u);
+    EXPECT_EQ(it->value, 5);
+    EXPECT_EQ(vec[0].value, 5);
+    EXPECT_EQ(vec[1].value, 10);
+    EXPECT_EQ(vec[2].value, 20);
+}
+
 TEST(vector_test, resize)
 {
     pstd::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8};

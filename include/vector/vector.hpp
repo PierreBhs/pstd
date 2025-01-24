@@ -107,6 +107,9 @@ public:
     constexpr iterator insert(const_iterator pos, T&&)
         requires(std::is_move_constructible_v<value_type> && std::is_move_assignable_v<value_type>);
 
+    template <typename... Args>
+    constexpr iterator emplace(const_iterator, Args&&...);
+
     template <class... Args>
     constexpr reference emplace_back(Args&&...)
         requires std::move_constructible<value_type>;
@@ -125,13 +128,20 @@ public:
         requires std::is_copy_constructible_v<value_type>;
 
 private:
-    constexpr pointer grow(size_type, bool);
+    constexpr pointer grow(size_type);
 
     constexpr pointer allocate(size_type);
     constexpr void    destroy();
 
     constexpr void default_append(size_type);
     constexpr void append(size_type, const_reference);
+
+    template <typename VAL_T>
+    constexpr void insert_uref(iterator, VAL_T&&);
+
+    template <typename... Args>
+    constexpr void insert_realloc(iterator, Args&&...);
+
     constexpr void erase_at_end(pointer);
 
     pointer   m_data{nullptr};
