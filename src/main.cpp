@@ -1,3 +1,4 @@
+#include "unique_ptr/unique_ptr.hpp"
 #include "utilities.hpp"
 #include "vector/vector.hpp"
 
@@ -15,6 +16,13 @@ int main()
     vec.emplace(vec.begin(), 135);
 
     std::println("{} {} {}", vec[0], vec[1], vec[2]);
+
+    pstd::vector<pstd::unique_ptr<int>> vec_ptr;
+
+    for (auto i{0ul}; i < 10ul; ++i) {
+        vec_ptr.emplace_back(pstd::make_unique<int>(i));
+        std::println("{}", *vec_ptr.back());
+    }
 
     return 0;
 }
