@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "unique_ptr/unique_ptr.hpp"
+#include "ptrs/unique_ptr.hpp"
 
 struct DeletionTracker
 {

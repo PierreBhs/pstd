@@ -1,11 +1,23 @@
-#include "unique_ptr/unique_ptr.hpp"
+#include "ptrs/shared_ptr.hpp"
+#include "ptrs/unique_ptr.hpp"
 #include "utilities.hpp"
 #include "vector/vector.hpp"
 
-template <typename>
-struct TD;
+#include <iostream>
 
-#include <vector>
+struct S
+{
+    S() { std::cout << "S::S()\n"; }
+    ~S() { std::cout << "S::~S()\n"; }
+    struct Deleter
+    {
+        void operator()(S* s) const
+        {
+            std::cout << "S::Deleter()\n";
+            delete s;
+        }
+    };
+};
 
 int main()
 {
@@ -24,6 +36,25 @@ int main()
         std::println("{}", *vec_ptr.back());
     }
 
+    auto sp = pstd::shared_ptr<S>{new S, S::Deleter{}};
+
+    auto use_count = [&sp](char c) {
+        std::cout << c << ") use_count(): " << sp.use_count() << '\n';
+    };
+
+    use_count('A');
+    {
+        auto sp2 = sp;
+        use_count('B');
+        {
+            auto sp3 = sp;
+            use_count('C');
+        }
+        use_count('D');
+    }
+    use_count('E');
+    sp.reset();
+    use_count('F');  // would print "F) use_count(): 0"
     return 0;
 }
 
