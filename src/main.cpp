@@ -1,3 +1,4 @@
+#include "heap/binary_heap.hpp"
 #include "ptrs/shared_ptr.hpp"
 #include "ptrs/unique_ptr.hpp"
 #include "utilities.hpp"
@@ -55,6 +56,10 @@ int main()
     use_count('E');
     sp.reset();
     use_count('F');  // would print "F) use_count(): 0"
+
+    pstd::binary_heap<int> max_pq;
+    max_pq.push(5);
+
     return 0;
 }
 

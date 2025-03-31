@@ -5,6 +5,7 @@ set(PSTD_TESTS pstd_tests)
 add_executable(
   ${PSTD_TESTS}
   ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/binary_heap_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/iterator_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/ranges_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/unique_ptr_tests.cpp
