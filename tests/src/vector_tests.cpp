@@ -3,8 +3,8 @@
 #include <random>
 #include <string>
 
-#include "utilities.hpp"
-#include "vector/vector.hpp"
+#include <pstd/utilities.hpp>
+#include <pstd/vector/vector.hpp>
 
 auto generate_random_vector(std::size_t n, int lowerBound, int upperBound)
 {

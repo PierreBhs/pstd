@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include "iterator/iterator.hpp"
-#include "vector/vector.hpp"
+
+#include <pstd/iterator/iterator.hpp>
+#include <pstd/vector/vector.hpp>
 
 TEST(IteratorTest, BasicFunctionality)
 {

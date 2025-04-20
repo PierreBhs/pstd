@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "ptrs/shared_ptr.hpp"
+
+#include <pstd/ptrs/shared_ptr.hpp>
 
 struct TestObject
 {

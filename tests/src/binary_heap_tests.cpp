@@ -1,8 +1,9 @@
 #include "gtest/gtest.h"
-#include "heap/binary_heap.hpp"  // Adjust path as needed
 
-#include <algorithm>  // std::is_sorted
-#include <compare>    // std::strong_ordering
+#include <pstd/heap/binary_heap.hpp>
+
+#include <algorithm>
+#include <compare>
 #include <string>
 #include <vector>
 
@@ -42,7 +43,6 @@ protected:
                 result.push_back(heap.top());
                 heap.pop();
             } catch (const std::out_of_range& e) {
-                // This shouldn't happen if !heap.empty() is checked, but good practice
                 ADD_FAILURE() << "Unexpected exception during pop_all: " << e.what();
                 break;
             }
@@ -60,11 +60,6 @@ TEST(BinaryHeapBasic, DefaultConstructorIsEmpty)
     pstd::binary_heap<int> pq;
     EXPECT_TRUE(pq.empty());
     EXPECT_EQ(pq.size(), 0);
-    // top() and pop() on empty should assert or throw (depending on build/implementation)
-    // GTest cannot easily check asserts without specific setup (EXPECT_DEBUG_DEATH)
-    // If using exceptions:
-    // EXPECT_THROW(pq.top(), std::out_of_range);
-    // EXPECT_THROW(pq.pop(), std::out_of_range);
 }
 
 TEST(BinaryHeapBasic, PushIncreasesSize)
@@ -306,8 +301,6 @@ TEST_F(BinaryHeapTest, SwapFunction)
     pq_min.push(3);
     pq_min.push(8);  // Top: 1, Size: 4
 
-    // Need adapter or temporary for swapping heaps with different types (comparator)
-    // Let's swap two max heaps for simplicity first
     pstd::binary_heap<int> pq_max2;
     pq_max2.push(100);
     pq_max2.push(200);  // Top: 200, Size: 2

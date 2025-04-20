@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include <ranges>
-#include "iterator/custom_view.hpp"
-#include "vector/vector.hpp"
+
+#include <pstd/iterator/custom_view.hpp>
+#include <pstd/vector/vector.hpp>
 
 TEST(MyViewTest, BasicUsage)
 {

@@ -1,40 +1,19 @@
 find_package(GTest REQUIRED)
 
-set(PSTD_TESTS pstd_tests)
-
-add_executable(
-  ${PSTD_TESTS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/binary_heap_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/iterator_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/ranges_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/unique_ptr_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/shared_ptr_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/vector_tests.cpp
+add_executable(pstd_tests
+    src/main.cpp
+    src/binary_heap_tests.cpp
+    src/iterator_tests.cpp
+    src/ranges_tests.cpp
+    src/unique_ptr_tests.cpp
+    src/shared_ptr_tests.cpp
+    src/vector_tests.cpp
 )
 
-target_include_directories(
-    ${PSTD_TESTS}
-    PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+target_link_libraries(pstd_tests PRIVATE
+    GTest::gtest_main
+    pstd::pstd
 )
-
-target_link_libraries(
-   ${PSTD_TESTS}
-    PRIVATE GTest::gtest
-            GTest::gmock
-)
-
-set(XML_OUTPUT_DIR ${CMAKE_BINARY_DIR}/Testing/Reports)
-if(DEFINED ENV{GTEST_OUTPUT})
-    set(XML_OUTPUT_DIR "")
-endif()
 
 include(GoogleTest)
-gtest_discover_tests(
-    ${PSTD_TESTS}
-    DISCOVERY_MODE
-    PRE_TEST
-    XML_OUTPUT_DIR
-    ${XML_OUTPUT_DIR}
-)
+gtest_discover_tests(pstd_tests)
