@@ -511,7 +511,7 @@ constexpr void vector<T>::insert_realloc(iterator pos, Args&&... args)
 
     auto* new_finish = new_data;
 
-    auto* const where = new_data + elems_before;
+    const auto* where = new_data + elems_before;
     std::construct_at(where, std::forward<Args>(args)...);
     new_finish = std::uninitialized_move(begin(), pos, new_data);
 

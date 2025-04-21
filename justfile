@@ -94,8 +94,8 @@ install-release:
     #!/usr/bin/env bash
     set -euxo pipefail
     cmake --build --preset conan-release
-    cmake --install --preset conan-release --prefix ./install_dir
-
+    cmake --install {{build_root}}/Release --prefix ./install_dir
+    
 # --- Clean Command ---
 clean:
     rm -rf {{build_root}}

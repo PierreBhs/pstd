@@ -24,7 +24,7 @@ target_compile_features(pstd INTERFACE cxx_std_23)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-install(DIRECTORY include/pstd/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY include/pstd DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(TARGETS pstd
     EXPORT pstdTargets

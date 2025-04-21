@@ -1,0 +1,16 @@
+install_dir := "../install_dir"
+
+build:
+    cmake -B build -DCMAKE_PREFIX_PATH={{install_dir}} -DCMAKE_BUILD_TYPE=Release
+    cmake --build build --config Release
+
+run:
+    ./build/example
+
+clean:
+    rm -rf build
+
+install-deps:
+    cd .. && just install
+
+all: install-deps build run
