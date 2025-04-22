@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <functional>
 #include <iterator>
 #include <vector>
@@ -50,8 +49,8 @@ public:
                                            std::is_nothrow_swappable_v<Compare>);
 
 private:
-    Container c;
-    Compare   comp;
+    Container m_c;
+    Compare   m_comp;
     // --- Heap Algorithms (Manual Implementation) ---
     void sift_up(size_type index);
     void sift_down(size_type index);
