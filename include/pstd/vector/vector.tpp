@@ -505,13 +505,13 @@ constexpr void vector<T>::insert_realloc(iterator pos, Args&&... args)
     auto* new_data{allocate(new_capacity)};
 
     const auto old_size{size()};
-    const auto new_size = old_size + 1;
+    const auto new_size{old_size + 1};
 
-    const auto elems_before = static_cast<size_type>(pos - begin());
+    const auto elems_before{static_cast<size_type>(pos - begin())};
 
     auto* new_finish = new_data;
 
-    const auto* where = new_data + elems_before;
+    auto* where{new_data + elems_before};
     std::construct_at(where, std::forward<Args>(args)...);
     new_finish = std::uninitialized_move(begin(), pos, new_data);
 
