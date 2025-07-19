@@ -4,3 +4,4 @@ CMakeUserPresets.json
 compile_commands.json
 example/build/
 .idea/
+install_dir/

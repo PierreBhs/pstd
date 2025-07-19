@@ -5,6 +5,7 @@ add_executable(pstd_tests
     src/binary_heap_tests.cpp
     src/iterator_tests.cpp
     src/ranges_tests.cpp
+    src/trie_tests.cpp
     src/unique_ptr_tests.cpp
     src/shared_ptr_tests.cpp
     src/vector_tests.cpp

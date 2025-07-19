@@ -9,13 +9,12 @@ void binary_heap<T, Container, Compare>::sift_up(size_type index)
 {
     while (index > 0) {
         size_type parent_index = (index - 1) / 2;
-        // If child has higher priority than parent according to comp
         if (m_comp(m_c[parent_index], m_c[index])) {
-            using std::swap;  // Enable ADL
+            using std::swap;
             swap(m_c[index], m_c[parent_index]);
-            index = parent_index;  // Move up to the parent's position
+            index = parent_index;
         } else {
-            break;  // Heap property satisfied for this subtree path
+            break;
         }
     }
 }
@@ -27,7 +26,7 @@ void binary_heap<T, Container, Compare>::sift_down(size_type index)
     while (true) {
         size_type left_child_index = 2 * index + 1;
         size_type right_child_index = 2 * index + 2;
-        size_type priority_child_index = index;  // Assume current node has highest priority initially
+        size_type priority_child_index = index;
 
         if (left_child_index < heap_size && m_comp(m_c[priority_child_index], m_c[left_child_index])) {
             priority_child_index = left_child_index;
@@ -37,13 +36,12 @@ void binary_heap<T, Container, Compare>::sift_down(size_type index)
             priority_child_index = right_child_index;
         }
 
-        // If a child had higher priority, swap and continue sifting down
         if (priority_child_index != index) {
             using std::swap;  // ADL
             swap(m_c[index], m_c[priority_child_index]);
             index = priority_child_index;  // Move down to the child's position
         } else {
-            break;  // Heap property satisfied for this subtree
+            break;
         }
     }
 }
@@ -51,16 +49,13 @@ void binary_heap<T, Container, Compare>::sift_down(size_type index)
 template <typename T, typename Container, typename Compare>
 void binary_heap<T, Container, Compare>::heapify()
 {
-    // Start from the last non-leaf node and sift down
     if (size() < 2)
-        return;  // No need to heapify for 0 or 1 element
+        return;
 
-    // Start from the parent of the last element
     for (size_type i = (size() / 2) - 1; i != static_cast<size_type>(-1); --i) {
         sift_down(i);
     }
 
-    // Handle potential wrap-around for size_type 0
     if (size() >= 2) {
         sift_down(0);
     }
@@ -149,11 +144,11 @@ void binary_heap<T, Container, Compare>::pop()
     assert(!empty() && "Cannot call pop() on an empty binary_heap");
     if (m_c.size() > 1) {
         using std::swap;
-        swap(m_c.front(), m_c.back());  // Move highest priority element to the end
+        swap(m_c.front(), m_c.back());
     }
-    m_c.pop_back();  // Remove it
+    m_c.pop_back();
     if (!m_c.empty()) {
-        sift_down(0);  // Restore heap property from the root
+        sift_down(0);
     }
 }
 
