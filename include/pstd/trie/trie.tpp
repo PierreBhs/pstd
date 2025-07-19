@@ -139,7 +139,7 @@ void trie::collectHelper(const node_t* node, std::string_view prefix, OutputIt o
         for (auto i = 25; i >= 0; --i) {
             if (currentNode->children[i]) {
                 char c = 'a' + i;
-                stack.push({currentNode->children[i].get(), currentStr + c});
+                stack.emplace(currentNode->children[i].get(), currentStr + c);
             }
         }
     }
