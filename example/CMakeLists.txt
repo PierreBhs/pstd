@@ -11,4 +11,7 @@ find_package(pstd REQUIRED)
 add_executable(example src/main.cpp)
 target_link_libraries(example pstd::pstd)
 
-install(TARGETS example DESTINATION bin)
+add_executable(trie_bench src/trie.cpp)
+target_link_libraries(trie_bench pstd::pstd)
+
+# install(TARGETS example DESTINATION bin)
