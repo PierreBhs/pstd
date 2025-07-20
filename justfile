@@ -11,7 +11,7 @@ conan-setup-debug:
     conan install . --build=missing -s build_type=Debug
 
 # --- Build Commands ---
-build: build-release
+build: build-release build-debug
 
 build-release:
     cmake --preset conan-release
@@ -73,12 +73,11 @@ perf-debug:
 python-env:
     #!/usr/bin/env bash
     set -euxo pipefail
-    python3 -m venv .venv
-    source .venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install pandas matplotlib seaborn
+    uv venv
+    uv pip install --upgrade pip && \
+    uv pip install conan pandas matplotlib seaborn
 
-plot: plot-release
+plot: conan-setup-release build-release perf-release plot-release
 
 # Plot using the virtualenv
 plot-release:
