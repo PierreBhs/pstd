@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <print>
 #include <vector>
 
@@ -32,19 +31,19 @@ void benchmark_autocomplete(const std::vector<std::string>& words, std::string_v
     auto vector_query_time = std::chrono::high_resolution_clock::now() - start;
     vector_result_count = vector_results.size();
 
-    auto print_time = [](auto duration, const char* action) {
-        std::println("{}: {}μs", action, std::chrono::duration_cast<std::chrono::microseconds>(duration).count());
+    auto print_time = [](auto duration, const char* action, size_t matches) {
+        std::println("{}: {}μs ({} matches)",
+                     action,
+                     std::chrono::duration_cast<std::chrono::microseconds>(duration).count(),
+                     matches);
     };
 
     std::println("\n=== Autocomplete Benchmark ({} words) with prefix: \"{}\" ===", words.size(), prefix);
-    print_time(trie_query_time, "Trie query    ");
-    print_time(vector_query_time, "Vector query  ");
-    std::cout << "Trie found: " << trie_result_count << " matches\n";
-    std::cout << "Vector found: " << vector_result_count << " matches\n";
-    std::cout << "Speed ratio: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(vector_query_time).count() * 1.0 /
-                     std::chrono::duration_cast<std::chrono::microseconds>(trie_query_time).count()
-              << "x faster\n";
+    print_time(trie_query_time, "Trie query", trie_result_count);
+    print_time(vector_query_time, "Vector query", vector_result_count);
+    std::println("Speed ratio: {:.2f}x faster",
+                 std::chrono::duration_cast<std::chrono::microseconds>(vector_query_time).count() * 1.0 /
+                     std::chrono::duration_cast<std::chrono::microseconds>(trie_query_time).count());
 }
 
 int main()

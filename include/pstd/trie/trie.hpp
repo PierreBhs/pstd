@@ -3,6 +3,12 @@
 #include <array>
 #include <memory>
 
+/*
+
+    Basic Trie implementation, works only for lower case letters
+
+*/
+
 namespace pstd {
 
 /* Concept needed for get_all_strings and get_strings_with_prefix */
@@ -41,10 +47,10 @@ private:
         bool                                    is_terminal{false};
     };
 
-    auto removeHelper(std::unique_ptr<node_t>& current, std::string_view word, size_t depth) -> bool;
+    auto remove_helper(std::unique_ptr<node_t>& current, std::string_view word, size_t depth) -> bool;
 
     template <typename OutputIt>
-    void collectHelper(const node_t* node, std::string_view prefix, OutputIt output) const;
+    void collect_helper(const node_t* node, std::string_view prefix, OutputIt output) const;
 
     std::unique_ptr<node_t> m_root{std::make_unique<node_t>()};
 };
