@@ -5,7 +5,7 @@ Pierre's STD containers
 
 C++ 23 is required to build this project!
 
-Using a venv is recommended (I'm using [uv](https://github.com/astral-sh/uv]). You can run the following, or `just python-env` if you have just installed. Don't forget to activate your env.
+Using a venv is recommended (I'm using [uv](https://github.com/astral-sh/uv])). You can run the following, or `just python-env` if you have just installed. Don't forget to activate your env.
 
 ```shell
 uv venv
